@@ -1,0 +1,474 @@
+*** Settings ***
+Resource          super.txt
+
+*** Keywords ***
+Layout_StateWideSearch
+    [Arguments]    ${lastName}=None    ${firstName}=None    ${SSN}=None    ${participantId}=None    ${birthDateStartRange}=None    ${birthDateEndRange}=None
+    ...    ${caseId}=None
+    SelectLayoutTypeToSearchCase    Statewide Search
+    Log Many    FirstName    ${firstName}    Log    ${lastName}    Participant ID    ${participantId}
+    ${bStatus}    Wait For Element Visible    ${participant_StateWideSearch_SSN}    10s
+    Run Keyword If    ${bStatus} != True    Fail    Participant ID is Not Visible in Statewide Search
+    Run Keyword If    "${lastName}" != "None"    Input Text    ${participant_StateWideSearch_LastName}    ${lastName}
+    Run Keyword If    "${firstName}" != "None"    Input Text    ${participant_StateWideSearch_FirstName}    ${firstName}
+
+SelectVRCaseInServiceStatus
+    [Documentation]    Selecting VR case in service Status:
+    ...
+    ...    Steps:
+    ...
+    ...    1. Selecting the required value from the "Selected Layout" drop down(for ex:Caseload-Open).
+    ...    2. Entering text in "Case-load status" field.
+    ...    3. Clicking the Select button of Caseload.
+    ...    4. Selecting "Case Type" field value as " VR" \ in "Case Load mini search".
+    ...    5. Clicking the "Find" button to search for required participant.
+    ...    6. Select the required case to authorization.
+    ${authDetailsDictionary}    ${caseLoadMiniSearchDict}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    ${authorizationDetailsSheetName}    CaseLoad_MiniSearch
+    SelectLayoutTypeToSearchCase    ${authDetailsDictionary}
+    CaseSearchAndSelectCaseLoad    ${authDetailsDictionary}    ${caseLoadMiniSearchDict}
+    SelectParticipant    ${authDetailsDictionary}
+
+SelectLayoutTypeToSearchCase
+    [Arguments]    ${caseLoadMiniSearchDict}
+    ${layoutName}    Get From Dictionary    ${caseLoadMiniSearchDict}    Case Search Layout
+    ${bStatus}    Wait For Element Visible    ${participant_CaseSearch_LaoutTab}    ${timeOut}    Waiting for Layout Tab to be visible in Case Search page of Participant
+    Run Keyword If    ${bStatus} != True    Fail    Layout Tab is not visible in Case Search page of Participant
+    Wait Until Keyword Succeeds    30s    3s    Click Element    ${participant_CaseSearch_LaoutTab}
+    ${layoutDropdownVisibility}    Wait For Element Visible    ${participant_Layout_SelectLayout_Dropdown}    ${timeOut}    Waiting for Case Load Mini Search window to be Visible
+    Run Keyword If    ${layoutDropdownVisibility} != True    FAIL    Case Load Mini Search window is not Visible
+    Input Text    ${participant_Layout_SelectLayout_Dropdown}    ${layoutName}
+    ${bStatus}    Run Keyword And Return Status    Click Element    ${participant_Layout_Apply}
+    Run Keyword If    ${bStatus} != True    Click Element    ${participant_Layout_Apply}
+
+SelecteCaseLoadFromMiniSearch
+    [Arguments]    ${dictForFilter}
+    [Documentation]    Selecting the case from CaseLoad minisearch:
+    ...
+    ...    Steps:
+    ...
+    ...    1.Selecting the Case Type as VR
+    ...    2.Select any required fileds for searching the CaseLoad
+    ...    3.Click on Find button
+    ...    4.Select the Caseload from Grid table
+    Comment    SelectTheWindow    Caseload Mini-Search - Participant - Aware
+    ${caseLoadMiniSearchVisibility}    Wait For Element Visible    //iframe[contains(@name,'CaseSearch') and contains(@src,'CaseloadMiniSearch')]    ${timeOut}
+    Run Keyword If    ${caseLoadMiniSearchVisibility} != True    FAIL    Case Load Mini Search window is not Visible
+    Select Frame    //iframe[contains(@name,'CaseSearch') and contains(@src,'CaseloadMiniSearch')]
+    Wait For Element Visible    ${participant_CaseLoadMiniSearch_CaseType}    ${timeOut}
+    InputTextFromDictionary    ${dictForFilter}    Reporting Structure    ${participant_CaseLoadMiniSearch_Reporting_Structure}
+    InputTextFromDictionary    ${dictForFilter}    Case Load Number    ${participant_CaseLoadMiniSearch_CaseloadNumber}
+    InputTextFromDictionary    ${dictForFilter}    Primary    ${participant_CaseLoadMiniSearch_Primary}
+    InputTextFromDictionary    ${dictForFilter}    Case Type    ${participant_CaseLoadMiniSearch_CaseType}
+    InputTextFromDictionary    ${dictForFilter}    Status    ${participant_CaseLoadMiniSearch_Status}
+    Click Element    ${participant_CaseLoadMiniSearch_Find}
+    ${caseLoadPrimaryToSelect}    Get From Dictionary    ${dictForFilter}    CaseLoad PrimaryToSelect
+    Wait For Element Visible    //table[contains(@id,'CaseloadMiniSearchGrid')]    10s
+    Click Element    //tr[contains(@id,'CaseloadMiniSearchGrid')]//td/a[normalize-space()='${caseLoadPrimaryToSelect}']
+    ${caseLoadStatus}    Wait For Element Visible    //div[@id='Caseload_ID__Caseload_Description_tokens']/span[contains(normalize-space(),'${caseLoadPrimaryToSelect}')]    30s    Case Load '${caseLoadPrimaryToSelect}' selected successfully
+    Run Keyword If    ${caseLoadStatus} != True    FAIL    Case Load is not Selected from the Case Load Mini Search window
+
+SelectAuthorizationVendorDetails
+    [Documentation]    Selecting the Vendor from Minisearch :
+    ...
+    ...    1. Clicking on "Find" button of \ Vendor.
+    ...    2. Entering Vendor name as "sears".
+    ...    3. Clicking on "Find button".
+    ...    4. Selecting the required vendor from grid.
+    ...    5. Verifying the selected vendor name and address in Authorization page.
+    ${bstatus}    Wait For Element Visible    ${button.FindVendor}    ${timeOut}
+    Click Element Using Javascript    ${button.FindVendor}
+    Sleep    3s
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'Authorization') and contains(@src,'VendorMiniSearch')]
+    ${vendorMini-searchStaus}    Wait For Element Visible    ${Header.Participant.vendorMiniSearch}    ${timeOut}    Vendor mini search window is not displayed when click on findvendor button.
+    ${authDetailsDictionary}    ${vendorMiniSearchDictionary}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    ${authorizationDetailsSheetName}    Vendor_MiniSearch
+    InputTextFromDictionary    ${vendorMiniSearchDictionary}    Vendor Number    ${text.participant.vendorNumber}
+    InputTextFromDictionary    ${vendorMiniSearchDictionary}    Vendor Federal ID    ${text.participant.vendorFederalId}
+    InputTextFromDictionary    ${vendorMiniSearchDictionary}    Vendor Name    ${text.participant.vendorName}
+    InputTextFromDictionary    ${vendorMiniSearchDictionary}    City    ${text.participant.city}
+    InputTextFromDictionary    ${vendorMiniSearchDictionary}    Zip    ${text.participant.zip}
+    SelectDropdownFromDictionary    ${vendorMiniSearchDictionary}    Service Provided Service Category    ${dropdown_VendorMiniSearch_ServiceProvidedServiceCategory}
+    SelectDropdownFromDictionary    ${vendorMiniSearchDictionary}    Vendor Status    ${dropdown_VendoeMiniSearch_VendorStatus}
+    Click Element    ${button.vendorMiniSearch.findVendor}
+    ${vendorNameToSelect}    Get From Dictionary    ${vendorMiniSearchDictionary}    VendorNameToSelect
+    ${codeToSelect}    Get From Dictionary    ${vendorMiniSearchDictionary}    CodeToSelect
+    ${vendorAddress}    Select the Record from vendor Search table    ${codeToSelect}    ${vendorNameToSelect}
+    Wait For Element Visible    //input[@title='Vendor Number read only']    10s
+    ${vendorNumber}    Get Value    //input[@title='Vendor Number read only']
+    ${vendorNumStatus}    Should Contain    ${vendorNumber}    ${codeToSelect}    Vendor number is mismatched.
+    ${vendorName}    Get Value    //input[@id='Vendor_AutoComplete']
+    ${vendorNameStaus}    Should Contain    ${vendorName}    ${vendorNameToSelect}    Vendor name is mismatched.
+    Comment    ${vendorAddress}    Get Value    //input[@title='Authorization Address required read only']
+    Comment    ${vendorAddressStatus}    Should Contain    ${AddressStatus}    ${vendorAddress}    Vendor Address is mismatched.
+    Comment    ${city}    Get Value    //input[@id='buAuth_Header__Auth_City']
+    Comment    ${vendorCityStatus}    Should Contain    ${AddressStatus}    ${city}    Vendor city is mismatched.
+    Comment    ${state}    Get Value    //input[@id='buAuth_Header__Auth_State_Abbrev']
+    Comment    ${vendorStateStatus}    Should Contain    ${AddressStatus}    ${state}    Vendor state is mismatched.
+    Comment    ${AuthZipcode}    Get Value    //input[@id='buAuth_Header__Auth_Zip_Code']
+    Comment    ${AuthZipcodeStatus}    Should Contain    ${AddressStatus}    ${AuthZipcode}    Vendor Auth zip is mismatched.
+    Comment    ${exitZipcode}    Get Value    //input[@id='buAuth_Header__Auth_Zip_Code_Ext']
+    Comment    ${exitZipCodeStatus}    Should Contain    ${AddressStatus}    ${exitZipcode}    Vendor exit zip code is mismatched.
+
+Select the Record from vendor Search table
+    [Arguments]    ${locatorCode}    ${name}
+    ${bstatus}    Wait For Element Visible    //td[normalize-space()='${locatorCode}']//parent::tr/td/a[normalize-space()='${name}']    ${timeOut}    No records were found.
+    ${vendorAddress}    Get Text    //tr[contains(@id,'VendorMiniSearchGrid')]//td[normalize-space()='${locatorCode}']//following-sibling::td[contains(text(),',')]
+    Run Keyword If    '${bstatus}'=='True'    Click Element Using Javascript    //td[normalize-space()='${locatorCode}']//parent::tr/td/a[normalize-space()='${name}']
+    ${bstatus}    Wait For Element Visible    ${button.FindVendor}    ${timeOut}    Non-medical authorization page is not visible with in given time.
+    [Return]    ${vendorAddress}
+
+FillAuthorizationGeneralDetails
+    [Documentation]    Filling the general details in Authorization screen:
+    ...
+    ...    Steps:
+    ...
+    ...    1. Filling Begin Date field.
+    ...    2. Filling the End Date field.
+    ...    3. Selecting Budget.
+    ${bstatus}    Wait For Element Visible    ${authorization_FindBudget}    ${timeOut}    General details is not visible within given time. Find Budget button is not visible
+    ${authDetailsDictionary}    ${dynamicFieldsDictionary}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    ${authorizationDetailsSheetName}    AuthorizationDynamicFieldDetail
+    ${authorizationStatus}    Get Value    //input[@id='buAuth_Header__Auth_Status']
+    ${Status}    String Should Contain    ${authorizationStatus}    Draft
+    Run Keyword If    ${Status} != True    FAIL    Authorization Status is '${authorizationStatus}'
+    ${beginDate}    Get Current Date
+    ${futureDate}    Get Future Or Past Date From Now    364
+    InputTextAndHandleAlertIfPresent    ${authorization_BeginDate}    ${beginDate}
+    InputTextAndHandleAlertIfPresent    ${authorization_EndDate}    ${futureDate}
+    SelectDropdownFromDictionary    ${dynamicFieldsDictionary}    Payment_Type    ${authorization_PaymentType}
+    SelectDropdownFromDictionary    ${dynamicFieldsDictionary}    Purchasing Authority    ${authorization_PurchasingAuthority}
+    SelectDropdownFromDictionary    ${dynamicFieldsDictionary}    Purchasing Method    ${authorization_PurchasingMethod}
+    InputTextFromDictionary    ${dynamicFieldsDictionary}    Contract Number    ${authorization_ContractNumber}
+    SelectDropdownFromDictionary    ${dynamicFieldsDictionary}    Shipping Instructions    ${authorization_ShippingInstructions}
+    SelectBudget    ${authDetailsDictionary}
+
+SelectBudget
+    [Arguments]    ${participsntDict}
+    [Documentation]    Selecting Budget from budget minisearch:
+    ...
+    ...    Steps:
+    ...
+    ...    1. Clicking "FindBudget" button.
+    ...    2. Selecting Budget required.
+    ...    3. Verifying that the selected budget is displaying in Budget field or not.
+    Wait For Element Visible    ${authorization_FindBudget}    ${timeOut}
+    Click Element    ${authorization_FindBudget}
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'Authorization') or contains(@name,'Budget') and (contains(@src,'BudgetMiniSearch'))]
+    ${budgetToSelect}    Get From Dictionary    ${participsntDict}    Budget To Select
+    ${searchResultsStatus}    Wait For Element Visible    //a[normalize-space()='${budgetToSelect}' or contains(@title,'${budgetToSelect}')]    ${timeOut}    Search results table is not visible within given time after click on find budget button.
+    Click Element Using Javascript    //a[normalize-space()='${budgetToSelect}' or contains(@title,'${budgetToSelect}')]
+    Sleep    10s
+    Unselect Frame
+    Wait For Element Visible    //textarea[@name='Budget_Name' and contains(normalize-space(),'${budgetToSelect}')]    10s
+    ${SelectedBudgetValue}    Get Text    //textarea[@name='Budget_Name']
+    Should Contain    ${SelectedBudgetValue}    ${budgetToSelect}
+
+SelectAuthorizationType
+    [Documentation]    Selecting the Authorization Type:
+    ...
+    ...    Steps:
+    ...
+    ...    1. Clicking the "NEW" tab in header Menu.
+    ...    2. Selecting "Authorization" from Sub Menu.
+    ...    3. Selecting the Authorization Type used in Setup.
+    ${authDetailsDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    ${newMenuVisibility}    Wait For Element Visible    ${participant_CaseManagement_New}    ${timeOut}
+    Run Keyword If    ${newMenuVisibility} != True    FAIL    New Menu is not visible in Participant Case management
+    ${bStatus}    Run Keyword And Return Status    Click Element    ${participant_CaseManagement_New}
+    Run Keyword If    ${bStatus} != True    Click Element    ${participant_CaseManagement_New}
+    ${authorizationSubmenuVisibility}    Wait For Element Visible    ${caseManagementAuthorizationSubMenu}    5s    Waiting for 'Authorization' Sub Menu to be visible in New Button
+    Run Keyword If    ${authorizationSubmenuVisibility} != True    FAIL    Authorization Sub Menu is not visible in New Menu
+    Click Element    ${caseManagementAuthorizationSubMenu}
+    ${authorizationType}    Get From Dictionary    ${authDetailsDictionary}    Authorization Type
+    ${authorizationPage}    Wait For Element Visible    //a[contains(@id,'dgData') and normalize-space()='${authorizationType}']    10s    Waiting for Authorization Page to be visible
+    Run Keyword If    ${authorizationPage} != True    FAIL    Authorization Page is not visible for the Participant
+    ${bStatus}    Run Keyword And Return Status    Click Element    //a[contains(@id,'dgData') and normalize-space()='${authorizationType}']
+    Run Keyword If    ${bStatus} != True    Click Element    //a[contains(@id,'dgData') and normalize-space()='${authorizationType}']
+
+AddNewItemForParticipantAuthorization
+    [Arguments]    ${participantDict}
+    Click Element    //a[normalize-space()='Finish']
+    ${bStatus}    Wait For Element Visible    //a[@class='rwPopupButton' and normalize-space()='Cancel']    10s    Wait for Confirmation alert
+    Run Keyword If    ${bStatus} != True    FAIL    Alert message "This authorization is in Draft Status. \ Press Cancel to return and Issue the authorization. \ Press OK to exit." is not displayed after click on Finish without Selecting the New Item
+    Run Keyword If    ${bStatus} == True    Click Element Using Javascript    //a[@class='rwPopupButton' and normalize-space()='Cancel']
+    Wait Until Keyword Succeeds    1m    2s    Unselect Frame
+    ${bStatus}    Wait For Element Visible    //h2[normalize-space()='Items']    10s
+    Wait Until Page Does Not Contain Element    //div[@id='divLoadingBox' and @class='OverlayLoading']    5s
+    Click Element    //h2[normalize-space()='Items']
+    Wait For Element Visible    //a[@title='New Item']    10s
+    Click Element    //a[@title='New Item']
+    Wait For Element Visible    //input[@name='buAuth_Detail_Line__Procedure_Code_ID']    10s
+    ${procedureCode}    Get From Dictionary    ${participantDict}    ProcedureCodeToSelect
+    Input Text    //input[@name='buAuth_Detail_Line__Procedure_Code_ID']    ${procedureCode}
+    Click Element    //input[@id='buAuth_Detail_Line__Auth_Detail_Line_Num']
+    Wait Until Element Is Not Visible    //input[@name='buAuth_Detail_Line__Service_Category_Desc' and @value='(Not Completed)']    20s    After Selecting the Procedure Code Service Category is not changed from (Not Completed) value
+    Click Element    //form[@id='Form1']//a[@title='Finish. \ Save and Close page']
+    ${bStatus}    Wait For Element Visible    //tr[contains(@id,'ItemsGrid')]/td[normalize-space()='${procedureCode}']    10s
+    Run Keyword If    ${bStatus} != True    FAIL    Procedure Code is not displaying in Item Grid
+
+IssueAuthorization
+    ${AuthrizationNumber}    Get Value    //input[@name='buAuth_Header__Auth_Number']
+    ${ActionButtonVisibility}    Wait For Element Visible    ${Button.participant.CaseManagement.Actions}    20s
+    Run Keyword If    ${ActionButtonVisibility} != True    FAIL    Actions button is not visible in Participant Case management
+    Click Element    ${Button.participant.CaseManagement.Actions}
+    ${ActionsSubmenuVisibility}    Wait For Element Visible    //a[@title='Issue Authorization']    5s    Waiting for Authorization Sub Menu to be visible in Actions menu.
+    Run Keyword If    ${ActionsSubmenuVisibility} != True    FAIL    Authorization Sub Menu is not visible in Actions Menu
+    Click Element    //a[@title='Issue Authorization']
+    ${alertText}    WaitForAlertToPresentAndGetText    10    You\'ve requested to issue Authorization Number ${AuthrizationNumber}. \ Do you wish to continue\?
+    Comment    ${issueAuthAlert}    String Should Contain    ${alertText}    ${AuthrizationNumber}
+    ${alertText}    WaitForAlertToPresentAndGetText    10    Authorization ${AuthrizationNumber} issued.
+    Comment    ${issueAuthAlert}    String Should Contain    ${alertText}    ${AuthrizationNumber}
+    Comment    Wait Until Keyword Succeeds    60s    2s    Select Frame    //iframe[contains(@name,'rAuthorization') and contains(@src,'ReportPrompt')]
+    Comment    ${ReportprintWindowStatus}    Wait For Element Visible    //span[@title='Print']/a[@title='Print']    2s    Reports prompts window is not visible within given time.
+    Comment    Click Element    //div[@id='ToolbarCommands']//a[@title='Cancel changes and close page']
+    Comment    Click On Element    //span[@title='Print']/a[@title='Print']
+    Comment    Sleep    5s
+    Comment    SelectTheWindow    Reports.aspx
+    Comment    Close Window
+    Comment    ${printwindowNames}    Get Window Names
+    Comment    ${printwindowNames}    Get Window Titles
+    [Return]    ${AuthrizationNumber}
+
+AmendAuthorization
+    [Arguments]    ${AuthrizationNumber}
+    ${authDetailsDictionary}    ${dynamicFieldsDictionary}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    ${authorizationDetailsSheetName}    AuthorizationDynamicFieldDetail
+    ${ActionButtonVisibility}    Wait For Element Visible    ${Button.participant.CaseManagement.Actions}    20s
+    Run Keyword If    ${ActionButtonVisibility} != True    FAIL    Actions button is not visible in Participant Case management
+    Click Element    ${Button.participant.CaseManagement.Actions}
+    ${AmendAtuhSubmenuVisibility}    Wait For Element Visible    //a[@title='Amend Authorization']    5s    Waiting for Amend Authorization Sub Menu to be visible in Actions menu.
+    Run Keyword If    ${AmendAtuhSubmenuVisibility} != True    FAIL    Amend Authorization Sub Menu is not visible in Actions Menu
+    Click Element    //a[@title='Amend Authorization']
+    ${alertText}    Run Keyword And Ignore Error    WaitForAlertToPresentAndGetText    5    Authorization is subject to case spending limit rules. \ You will not be able to save your amendment if your changes cause the authorization to exceed the spending limit. \ Do you wish to continue? \ (PLEASE NOTE: \ When amending, you cannot cancel out of the authorization datapage.)
+    Comment    WaitForAlertToPresentAndGetText    5
+    ${budgetbuttonStatus}    Verify Element Visible    //a[@title='Find Budget']
+    ${vendorFindButtonStatus}    Verify Element Visible    //a[@title='Find Vendor is not available']
+    Comment    Verifing the budget button after select the Amend authorization budget button should be visible and vendor find button should not be availabe.
+    Run Keyword If    '${budgetbuttonStatus}'=='False' and '${vendorFindButtonStatus}'=='False'    Fail    Budget button is not visble.
+    SelectDropdownFromDictionary    ${dynamicFieldsDictionary}    Amendment Reason    ${authorization_AmendmentReason}
+    AddNewItemFoAuthorization
+    Wait For Element Visible    //input[@title='Current Total read only']    ${timeOut}
+    ${currentTotal}    Get Value    //input[@title='Current Total read only']
+    ${currentTotal}    Replace String    ${currentTotal}    $    ${EMPTY}
+    ${sumOfTotlaRecordsValue}    GetSumOfAmountFromItemGrid
+    ${afterAmedAuthCurrentTotal}    Should Be Equal As Numbers    ${sumOfTotlaRecordsValue}    ${currentTotal}
+    Click Element    //span[@title='Finish. \ Save and Close page']/a[@title='Finish. \ Save and Close page']
+    ${alertText}    WaitForAlertToPresentAndGetText    5    Authorization ${AuthrizationNumber} amended
+    [Return]    ${currentTotal}
+
+AddNewItemFoAuthorization
+    ${authDetailsDictionary}    ${dynamicFieldsDictionary}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    ${authorizationDetailsSheetName}    AuthorizationDynamicFieldDetail
+    ${newItemButtonVisibility}    Wait For Element Visible    ${authorization_NewItem}    ${timeOut}
+    Run Keyword If    ${newItemButtonVisibility} != True    FAIL    New Item Button is not visible
+    ${ItemsCountInGridBeforeDraft}    Get Matching Xpath Count    ${authorization_NewItem_GridRows}
+    Click Element    ${authorization_NewItem}
+    Wait For Element Visible    ${authorization_FindProcedure}    ${timeOut}
+    Click Element    ${authorization_FindProcedure}
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'AuthorizationItem') and contains(@src,'ProcCodeMiniSearch')]
+    Click Element    ${authorization_ProcedureCodeMiniSearch_Find}
+    ${ProcedureCode}    Get From Dictionary    ${authDetailsDictionary}    ProcedureCodeToSelect
+    Wait For Element Visible    //a[text()='${ProcedureCode}']    ${timeOut}
+    Click Element    //a[text()='${ProcedureCode}']
+    Wait For Element Visible    //input[@id='Procedure_Code_AutoComplete']    ${timeOut}
+    ${ProcedureCodeAfterEntry}    Get Value    //input[@id='Procedure_Code_AutoComplete']
+    Should Contain    ${ProcedureCodeAfterEntry}    ${ProcedureCode}
+    Input Text    //textarea[@name='buAuth_Detail_Line__Auth_Detail_Desc']    Test
+    ${bStatus}    Wait For Element Visible    ${authorization_NewItem_Units}    ${timeOut}
+    Run Keyword If    ${bStatus} != True    FAIL    Units Textbox is not visible
+    ${unitsValue}    Get Value    ${authorization_NewItem_Units}
+    Run Keyword If    '${unitsValue}' != '1.00' or '${unitsValue}' == '${EMPTY}'    InputTextAndHandleAlertIfPresent    ${authorization_NewItem_Units}    1
+    Wait For Element Visible    ${authorization_NewItem_Rate}    ${timeOut}
+    ${Rate}    Get Value    ${authorization_NewItem_Rate}
+    Run Keyword If    '${Rate}'=='$0.00' or '${Rate}'=='${EMPTY}'    InputTextAndHandleAlertIfPresent    ${authorization_NewItem_Rate}    $100.00
+    ${unitsValue}    Get Value    ${authorization_NewItem_Units}
+    ${Rate}    Get Value    ${authorization_NewItem_Rate}
+    ${rate}    Replace String    ${Rate}    $    ${EMPTY}
+    ${calculateValue}    Evaluate    ${rate}*${unitsValue}
+    Run Keyword And Ignore Error    Click Element    //input[@name='CalculatedAmount']
+    ${calculatedAmount}    Get Value    //input[@name='CalculatedAmount']
+    ${calculatedAmount}    Replace String    ${calculatedAmount}    $    ${EMPTY}
+    Should Be Equal As Numbers    ${calculatedAmount}    ${calculateValue}
+    Comment    #Check None in Source of Comparable Benefit Checkbox List.Click FINISH
+    ${value}    Return If Dictionary Contains Key    ${dynamicFieldsDictionary}    Check None in Source of Comparable Benefit Checkbox
+    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Wait Until Element Is Visible    ${checkBox_authorization_NewItem_None}    5s
+    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}' and '${value}' == 'Yes'    Click Element    ${checkBox_authorization_NewItem_None}
+    Click Element    //span[@title='Finish. \ Save and Close page']//a[@title='Finish. \ Save and Close page']
+    Comment    #Verify that New Item is added to the \ Grid in Authorization page
+    ${bStatus}    Wait For Element Visible    ${authorization_NewItem_GridRows}    ${timeOut}
+    Run Keyword If    ${bStatus} != True    FAIL    Item Grid is Not visible
+    ${ItemsCountInGridAfterDraft}    Get Matching Xpath Count    ${authorization_NewItem_GridRows}
+    Run Keyword If    ${ItemsCountInGridAfterDraft}!=${ItemsCountInGridBeforeDraft}+1    FAIL    New Item was not added in grid
+    ${ServiceCodeInGrid}    Wait For Element Visible    //tr[last() and contains(@id,'ItemData_ct')]//td[contains(normalize-space(),'${ProcedureCode}')]    ${timeOut}
+    Run Keyword If    '${ServiceCodeInGrid}'!='True'    FAIL    Item was not added in grid.Procedure code is not visible
+
+GetSumOfAmountFromItemGrid
+    ${bStatus}    Wait For Element Visible    //table[contains(@class,'MasterTable') and contains(@id,'ItemData')]/tbody/tr    ${timeOut}
+    Run Keyword If    ${bStatus} != True    FAIL    Rows in Item Grid are not visible
+    ${rowCount}    Get Matching Xpath Count    //table[contains(@class,'MasterTable') and contains(@id,'ItemData')]/tbody/tr
+    ${totalValue}    Set Variable    0
+    : FOR    ${itr}    IN RANGE    1    ${rowCount}+1
+    \    ${newValue}    Get Text    //table[contains(@class,'MasterTable') and contains(@id,'ItemData')]/tbody/tr[${itr}]/td[6]
+    \    Log    ${newValue}
+    \    ${newValue}    Replace String    ${newValue}    $    ${EMPTY}
+    \    ${totalValue}    Evaluate    ${totalValue}+${newValue}
+    Log    ${totalValue}
+    [Return]    ${totalValue}
+
+Add_Payment
+    [Arguments]    ${Current_Total}    ${Auth_Num}
+    ${participantDict}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    ${participantName}    Get From Dictionary    ${participantDict}    ParticipantNameToSelect
+    ${CaseManagementPageStatus}    Wait For Element Visible    //a[@title='1. Case Management']    ${timeOut}
+    Run Keyword If    '${CaseManagementPageStatus}'!='True'    Fail    case management page is not displaying
+    Select The Dropdown value    //td/a[@id='SkinnedLayout_List']    Authorizations - Open
+    Click Element    //a[@id='ApplyLayout']
+    Wait For Element Visible    //td[normalize-space()='${Auth_Num}']    ${timeOut}
+    ${ActivityName}    Get Text    //td[normalize-space()='${Auth_Num}']/preceding-sibling::td/a[contains(@title,'${Auth_Num}')]
+    Click Element    //td[normalize-space()='${Auth_Num}']/preceding-sibling::td/a[contains(@title,'${Auth_Num}')]
+    Select Window    ${participantName} - ${ActivityName} - Participant - Aware
+    Click Element    //a[@id='NewPayment']
+    Wait For Element Visible    //span[@id='AEPageHeader1_PageTitle' and text()='Payment for ${participantName}']    ${timeOut}
+    ${ItemNOBeforeAdd}    Get Value    //input[@id='Item_Number']
+    Should Be Equal    ${ItemNOBeforeAdd}    1    Item Number is not showing as "1"
+    Click Element    //a[@id='SelectItem']
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'Payment') and contains(@src,'AuthItemMiniSearch')]
+    ${bstatus}    Wait For Element Visible    //em[normalize-space()='Authorization Item Mini-Search - Participant - Aware']    4s
+    Unselect Frame
+    Click On Element    //a[@title='Close']/span[normalize-space()='Close']
+    Wait For Element Visible    //a[@id='SelectItem']    ${timeOut}
+    Click Element    //a[@id='SelectItem']
+    ${bstatus}    Wait For Element Visible    //a[@title='Close']/span[normalize-space()='Close']    ${timeOut}
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'Payment') and contains(@src,'AuthItemMiniSearch')]
+    ${bstatus}    Wait For Element Visible    //em[normalize-space()='Authorization Item Mini-Search - Participant - Aware']    4s
+    ${OutstandingAmount_Grid}    Get Text    //td[normalize-space()=2]/following-sibling :: td[@align='right']
+    Click Element    //td[normalize-space()=2]/a
+    Wait For Element Visible    //span[@id='AEPageHeader1_PageTitle' and text()='Payment for ${participantName}']    ${timeOut}
+    ${ItemNOAfterAdd}    Get Value    //input[@id='Item_Number']
+    Should Be Equal    ${ItemNOAfterAdd}    2    Item Number is not showing as "2" after adding 2nd item
+    ${tmrwDate}    Get Future Or Past Date From Now    1
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Service_Start_Date']    ${tmrwDate}
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Service_End_Date']    ${tmrwDate}
+    ${Today'sDate}    Get Current Date
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Service_Start_Date']    ${Today'sDate}
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Invoice_Received_Date']    ${Today'sDate}
+    Select The Dropdown value    //a[@id='SkinnedbuPayment_Request__Payment_Action_Desc']    Final
+    Click Element    //a[@title='Finish. \ Save and Close page']
+    Wait For Element Visible    //a[@id='FinalPayAll']    ${timeOut}
+    ${FinalPayAllButtonStatus}    Verify Element Present    //a[@id='FinalPayAll']
+    Run Keyword If    '${FinalPayAllButtonStatus}'=='True'    FinalPayAll    ${participantName}
+    Click Element    //a[@title='Finish. \ Save and Close page']
+    Select Window    Main Menu - AWARE VR
+    Click Element    //a[@title='Log Out']
+    [Teardown]
+
+FinalPayAll
+    [Arguments]    ${participantName}
+    ${tmrwDate}    Get Future Or Past Date From Now    1
+    ${Today'sDate}    Get Current Date
+    Click Element    //a[@id='FinalPayAll']
+    Wait For Element Visible    //span[@id='AEPageHeader1_PageTitle' and contains(text(),'Final Pay All for ${participantName}')]    ${timeOut}
+    Element Should Be Visible    //td[normalize-space()=1]
+    ${OutStandAmnt}    Get Text    //td[normalize-space()=1]/following-sibling :: td[2]
+    ${PaymentAmnt}    Get Value    //input[@id='ItemDataGrid_ctl00_ctl04_PaymentAmount']
+    Should Be Equal    ${OutStandAmnt}    ${PaymentAmnt}
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Invoice_Received_Date']    ${Today'sDate}
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Service_Start_Date']    ${Today'sDate}
+    InputTextAndHandleAlertIfPresent    //input[@id='buPayment_Request__Service_End_Date']    ${tmrwDate}
+    Click Element    //a[@title='Finish. \ Save and Close page']
+    Wait For Element Visible    //a[@id='FinalPayAll']    ${timeOut}
+    ${OutStantTotalAfterFinalPay}    Get Value    //input[@id='buAuth_Header__Auth_Outstanding_Total_Calc']
+    Should Be Equal    ${OutStantTotalAfterFinalPay}    $0.00
+    ${CurrentTotalAfterFinalPay}    Get Value    //input[@id='buAuth_Header__Auth_Curr_Total_Calc']
+    ${PaidTotalAfterFinalPay}    Get Value    //input[@id='buAuth_Header__Auth_Paid_Total_Calc']
+    Should Be Equal    ${CurrentTotalAfterFinalPay}    ${PaidTotalAfterFinalPay}
+
+CaseSearchAndSelectCaseLoad
+    [Arguments]    ${authDetailsDictionary}    ${caseLoadMiniSearchDict}
+    ${caseStatusOpenElementStatus}    Wait For Element Visible    ${participant_Search_CaseStatus-Open}    ${timeOut}    Waiting for Case Status - Open Dropdown to be visible
+    Run Keyword If    ${caseStatusOpenElementStatus} != True    FAIL    Case Status - Open Dropdown is not visible
+    InputTextFromDictionary    ${authDetailsDictionary}    Case Status - Open    ${participant_Search_CaseStatus-Open}
+    ${caseLoadRequired}    Get From Dictionary    ${authDetailsDictionary}    Case Load Required
+    Run Keyword If    '${caseLoadRequired}' == 'Yes'    Run Keywords    Click Element    ${participant_Search_CaseLoad_Select}
+    ...    AND    SelecteCaseLoadFromMiniSearch    ${caseLoadMiniSearchDict}
+    ${alertElementVisibility}    Wait For Element Visible    ${participant_Search_Alert}    ${timeOut}
+    Run Keyword If    ${alertElementVisibility} != True    FAIL    Alert Dropdown is not visible in Search criteria
+    InputTextFromDictionary    ${authDetailsDictionary}    Alert    ${participant_Search_Alert}
+    InputTextFromDictionary    ${authDetailsDictionary}    Case Access Security    ${participant_Search_CaseAccessSecurity}
+    InputTextFromDictionary    ${authDetailsDictionary}    Mode    ${participant_Search_Mode}
+    Click Element    ${participant_Search_Find}
+
+SelectParticipant
+    [Arguments]    ${authDetailsDictionary}
+    ${participantId}    Get From Dictionary    ${authDetailsDictionary}    ParticipantIdToSelect
+    ${participantName}    Get From Dictionary    ${authDetailsDictionary}    ParticipantNameToSelect
+    Sleep    2s
+    ${recordVisibility}    Wait For Element Visible    //div[@id='SearchGrid_GridData']//table//tr[contains(@id,'SearchGrid_ct')]//td[normalize-space()='${participantId}']//preceding-sibling::td[normalize-space()='${participantName}']//preceding-sibling::td/a[normalize-space()='Select']    ${timeOut}    waiting for the record to be visible in the Grid table
+    Run Keyword If    ${recordVisibility} != True    FAIL    Participant Record is not visible in the Grid
+    Click Element    //div[@id='SearchGrid_GridData']//table//tr[contains(@id,'SearchGrid_ct')]//td[normalize-space()='${participantId}']//preceding-sibling::td[normalize-space()='${participantName}']//preceding-sibling::td/a[normalize-space()='Select']
+
+AuthorizationValidations
+    ${authDetailsDictionary}    ${dynamicFieldDictionary}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    ${authorizationDetailsSheetName}    AuthorizationDynamicFieldDetail
+    ${newItemButtonVisibility}    Wait For Element Visible    ${authorization_NewItem}    ${timeOut}
+    Run Keyword If    ${newItemButtonVisibility} != True    FAIL    New Item Button is not visible
+    Log    Click the New Item Button for the end date as one year from todays date to verify the maximum date alert for new authorization item
+    Click Element    ${authorization_NewItem}
+    ${bStaus}    WaitForAlertToPresentAndGetText    6    Please correct these errors: 1. End Date must be less than 6/30/2017, the maximum End Date.
+    Comment    Run Keyword If    ${bStaus} != True    FAIL    Expected Alert is not present after click on New Item by giving the maximum end date
+    Log    Enter the Tomorrow date in End date
+    ${tmrwDate}    Get Future Or Past Date From Now    1
+    InputTextAndHandleAlertIfPresent    ${authorization_EndDate}    ${tmrwDate}
+    Log    verify mandatory alert of Service category and Rate rquired fields.Click New Item button and Click Finish
+    Click Element    ${authorization_NewItem}
+    Wait For Element Visible    ${authorization_FindProcedure}    ${timeOut}
+    Click Element    //form[@id='Form1']//a[@title='Finish. \ Save and Close page']
+    ${bStatus}    WaitForAlertToPresentAndGetText    6    Please correct these errors: 1. Service Category is required. 2. Rate is required.
+    Comment    Run Keyword If    ${bStatus} != True    FAIL    Searvice Category and Rate mandatory alert was not displayed
+    Log    Verify selected service category in Authorization page is replicating in Procedure code Mini Search window
+    ${bstatus}    Wait For Element Visible    //a[@id='SkinnedbuAuth_Detail_Line__Service_Category_Desc']    10s
+    ${count}    Get Matching Xpath Count    //select[@title='Service Category required']/option
+    Run Keyword If    ${count} <2    FAIL    Service category Drop down values are empty
+    ${bStatus}    Run Keyword And Return Status    Click Element    //a[@id='SkinnedbuAuth_Detail_Line__Service_Category_Desc']
+    Run Keyword And Return If    ${bStatus} != True    Click Element    //a[@id='SkinnedbuAuth_Detail_Line__Service_Category_Desc']
+    Click Element    //div[contains(@class,'rfdSelectBoxDropDown')]//ul/li[${count}]
+    ${serviceCategory}    Get Text    //a[@id='SkinnedbuAuth_Detail_Line__Service_Category_Desc']
+    Click Element    ${authorization_FindProcedure}
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'AuthorizationItem') and contains(@src,'ProcCodeMiniSearch')]
+    ${serviceCategoryValueInMiniSerch}    Get Text    //a[@id='SkinnedDynamic_Filter_Procedure_Service_Category']
+    Should Contain    ${serviceCategoryValueInMiniSerch}    ${serviceCategory}
+    Click Element    //form[contains(@action,'ProcCodeMiniSearch')]//a[contains(@id,'Cancel_Anchor') and normalize-space()='Cancel']
+    Log    Set Service Category (Not Completed) to check mandatory validation for Service Category
+    Wait For Element Visible    ${authorization_FindProcedure}    20s
+    Select The Dropdown value    //a[@title='Service Category required']    (Not Completed)
+    ${bStatus}    WaitForAlertToPresentAndGetText    6    Please correct these errors: 1. Service Category is required.
+    Comment    Run Keyword If    ${bStatus} != True    FAIL    Mandatory alert for Service Category is not displaying accepting the Not Completed as Drop down value
+    Log    Verify that service category code is set to 'All' in Procedure code mini search when nothing is selected in authorization page
+    ${bstatus}    Wait For Element Visible    ${authorization_FindProcedure}    20s
+    Click Element    ${authorization_FindProcedure}
+    Wait Until Keyword Succeeds    1m    2s    Select Frame    //iframe[contains(@name,'AuthorizationItem') and contains(@src,'ProcCodeMiniSearch')]
+    ${bstatus}    Wait For Element Visible    ${authorization_ProcedureCodeMiniSearch_Find}    10s
+    ${serviceCategoryValueInMiniSerch}    Get Text    //a[@id='SkinnedDynamic_Filter_Procedure_Service_Category']
+    Should Contain    ${serviceCategoryValueInMiniSerch}    (All)
+    Log    Find and select the Procedure Code and Enter Text in Description field
+    Click Element    ${authorization_ProcedureCodeMiniSearch_Find}
+    ${ProcedureCode}    Get From Dictionary    ${authDetailsDictionary}    ProcedureCodeToSelect
+    ${bstatus}    Wait For Element Visible    //a[text()='${ProcedureCode}']    10s
+    Click Element    //a[text()='${ProcedureCode}']
+    ${bstatus}    Wait For Element Visible    //input[@id='Procedure_Code_AutoComplete']    10s
+    ${serviceCategory}    Get Text    //a[@title='Service Category required']
+    Should Not Contain    ${serviceCategory}    Not Completed    Verifies that Service Category field should contain some value other than Not Completed
+    ${ProcedureCodeAfterEntry}    Get Value    //input[@id='Procedure_Code_AutoComplete']
+    Should Contain    ${ProcedureCodeAfterEntry}    ${ProcedureCode}
+    Input Text    //textarea[@name='buAuth_Detail_Line__Auth_Detail_Desc']    Test
+    Log    Verify maximum amount validation for Units field
+    InputTextAndHandleAlertIfPresent    //input[@title='Units required']    99999999
+    Run Keyword And Ignore Error    Click Element    //input[@name='luProcedure_Code__Procedure_Unit_Desc']
+    ${bStatus}    WaitForAlertToPresentAndGetText    6    Please correct these errors: 1. Units must be 0.00 or between 0.00 and 99,999.99.
+    Comment    Run Keyword If    ${bStatus} != True    FAIL    Alert was not present when \ Entring the Maximum value '9999999' in Units filed
+    ${bstatus}    Wait For Element Visible    //a[@title='Cancel changes and close page']    ${timeOut}
+    Click Element    //a[@title='Cancel changes and close page']
+
+DraftAuthorization
+    SelectMainModule    ${moduleNameToSelect}
+    SelectVRCaseInServiceStatus
+    SelectAuthorizationType
+    FillAuthorizationGeneralDetails
+    SelectAuthorizationVendorDetails
+    AuthorizationValidations
+    AddNewItemFoAuthorization

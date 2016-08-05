@@ -1,0 +1,14 @@
+*** Variables ***
+${Oklahoma_URL}    https://aedmz.com/okaware5
+${Browser}        gc
+${userName}       counselor2
+${password}       AE@!!iance6
+${moduleNameToSelect}    Participant
+${California_URL}    https://aedmz.com/cafinancialtest
+${authorizationFilePath}    F:\\AWARE_Wizard\\Automation_Scripts\\TestData\\AuthorizationAndPayment.xlsx
+${timeOut}        30s
+${Header.Participant.vendorMiniSearch}    //span[normalize-space()='Vendor Mini-Search']
+${participant_CaseSearch_LaoutTab}    //div[@id='SearchTabStrip']//a[@id='LayoutTab']
+${participantAuthFilePath}    D:\\Automation_Robot_Framework\\AWARE_Wizard\\Automation_Scripts\\TestData\\Participant_Authorization.xlsx
+${authorizationDetailsSheetName}    Authorization_Details
+${authorization_NewItem_GridRows}    //div[@id='ItemData']/table/tbody/tr[@role='row']

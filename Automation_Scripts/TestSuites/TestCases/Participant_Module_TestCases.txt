@@ -1,0 +1,53 @@
+*** Settings ***
+Resource          ../../KeyWords/super.txt
+
+*** Test Cases ***
+AuthorizationAndPayment
+    [Documentation]    Draft a Vendor Authorization
+    ...
+    ...    Steps:
+    ...    1. Login to the application.
+    ...    2. Selecting the Participant module.
+    ...    3. Select VR case in service status.
+    ...    4. Select Authorization Type.
+    ...    5. Filling Authorization General details.
+    ...    6. Selecting Vendor details.
+    ...    7. Adding New Item for the Selected Authorization
+    LogInToTheApplication    ${userName}    ${password}
+    DraftAuthorization
+    ${AuthrizationNumber}    IssueAuthorization
+    ${currentTotalValue}    AmendAuthorization    ${AuthrizationNumber}
+    Comment    Add_Payment    ${currentTotalValue}    ${AuthrizationNumber}
+    Comment    LogOutFromApplication
+    [Teardown]    Stop Application
+
+Participant_Draft_Authorization
+    [Documentation]    Draft a Participant Authorization
+    ...
+    ...    Steps:
+    ...    1. Login to the application
+    ...    2. Selecting the Participant module.
+    ...    3. Select VR case in service status.
+    ...    4. Select Authorization Type.
+    ...    5.Select Budget
+    ...    6. Adding New Item for the Selected Authorization
+    ${LoginStatus}    Set Variable    False
+    ${participantDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${participantAuthFilePath}    Y    Draft_Authorization_Details
+    ${URL}    Get From Dictionary    ${participantDictionary}    Environment_URL
+    ${LoginStatus}    LogInToTheApplication    ${UserName}    ${Password}    ${URL}
+    Run Keyword If    ${LoginStatus} != True    Fail    Failed To Login to the Application
+    SelectMainModule    Participant
+    ${testCaseRef}    Get From Dictionary    ${participantDictionary}    TestCaseName
+    ${caseLoadMiniSaechDict}    Get Ms Excel Row Values Into Dictionary Based On Key    ${participantAuthFilePath}    ${testCaseRef}    Caseload_MiniSearch
+    SelectVRCaseInServiceStatus    ${participantDictionary}    ${caseLoadMiniSaechDict}
+    ${environment}    Get From Dictionary    ${participantDictionary}    Environment
+    Wait For Element Visible    //div[@id='CaseManagementGrid']/table/tbody/tr[1]/td[2]    10s
+    ${fiscalYearValue}    Get Text    //div[@id='CaseManagementGrid']/table/tbody/tr[1]/td[2]
+    Should Not Contain    ${fiscalYearValue}    2016    Authorization is alreaady Done for the Fiscal Year
+    SelectAuthorizationType    ${participantDictionary}
+    SelectBudget    ${participantDictionary}
+    AddNewItemForParticipantAuthorization    ${participantDictionary}
+    Comment    CreateNewAuthorization    ${participantDictionary}
+    Comment    ${logOutStatus}    LogOutFromApplication
+    Comment    Run Keyword If    ${logOutStatus} != True    Fail    Failed To LogOut From the Application
+    [Teardown]    Stop Application

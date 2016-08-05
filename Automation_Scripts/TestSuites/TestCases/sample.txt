@@ -1,0 +1,86 @@
+*** Settings ***
+Resource          ../../KeyWords/super.txt
+
+*** Test Cases ***
+Manipulate Multiple Windows
+    [Tags]    MultiWindow
+    Open Browser    http://robotframework.org    firefox
+    Maximize Browser Window
+    ${Window1Title}=    Get Title
+    Wait Until Element Is Visible    css=div.button.orange    10s
+    Click Element    css=div.button.orange
+    Wait Until Element Is Visible    link=Builtin
+    Click Element    link=Builtin
+    Comment    This is a new Window
+    Sleep    5s
+    Select Window    Title=Robot Framework documentation
+    Wait Until Element Is Visible    //button[@value='BuiltIn']
+    Click Element    //button[@value='BuiltIn']
+    Sleep    5s
+    Select Window    Title=Builtin
+    Comment    Go back to the first window
+    Sleep    5s
+    Select Window    Title=${Window1Title}
+    Page Should Contain Element    link=Builtin
+    Close Browser
+
+sample
+    Comment    ${LoginStatus}    Set Variable    False
+    Comment    ${LoginStatus}    LogInToTheApplication    ${UserName}    ${Password}
+    Comment    Run Keyword If    ${LoginStatus} != True    Fail    Failed To Login to the Application
+    Comment    SelectMainModule    Help Desk
+    Comment    Click Element    //tr//a[@id='Tables']
+    Comment    sleep    5s
+    Comment    Click On Element    //td/a[@id='SkinnedLayout_List']
+    Comment    sleep    3s
+    Comment    Click On Element    //div[contains(@id,'rfdSubMenu')]/ul/li[normalize-space()='System Table Search']
+    Comment    Comment    Select From List By Value    //select[@id='Layout_List']    System Table Search
+    Comment    ${CaseLoadDict}    Create Dictionary    case    Service    Status    Active
+    Comment    ${testCaseRef}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    Comment    Log Many    Test Case Reference-    ${testCaseRef}
+    ${envir}    Set Variable    CA
+    ${URL}    GetURLBasedOnEnvironment    ${envir}
+    Log Many    URL=    ${URL}
+
+sample2
+    Comment    ${CaseLoadDict}    Create Dictionary    Case Status    \    Status    Active
+    Comment    Comment    SelectVRCaseInServiceStatus    ${CaseLoadDict}
+    Comment    ${value}    InputTextFromDictionary    ${CaseLoadDict}    Action    //xpth
+    Comment    Log Many    Value=    ${value}
+    Comment    ${CurrentOpnedPageTiltles}    Get Window Titles
+    Comment    : FOR    ${itr}    IN RANGE    0    10
+    Comment    \    ${noOfWindows}    Get Length Of List    ${CurrentOpnedPageTiltles}
+    Comment    \    Exit For Loop If    ${noOfWindows} == ${ExpectedNoOfWindows}
+    Comment    ${CurrentOpnedPageTiltles}    Get Window Titles
+    Comment    : FOR    ${itr}    IN RANGE    0    ${ExpectedNoOfWindows}-1
+    Comment    \    ${bStatus}    String Should Contain    @{CurrentOpnedPageTiltles}[${itr}]    ${WindowTitleToSelect}
+    Comment    \    Continue For Loop If    '${bStatus}'!='True'
+    Comment    \    Select Window By Title    ${WindowTitleToSelect}
+    Comment    \    Exit For Loop
+    Comment    ${caseLoadMiniSaechFilterDict}    Get Ms Excel Row Values Into Dictionary Based On Key    ${participantFilpePath}    Y    CaseLoad_MiniSearch
+    Comment    Log Dictionary    ${caseLoadMiniSaechFilterDict}
+    Comment    ${length}    Get Length    ${caseLoadMiniSaechFilterDict}
+    Comment    Run Keyword If    ${length} == 0    FAIL    Length condition is satisfied
+    Comment    Create List    [True, u'Please correct these errors: 1. Units is required.']
+    Comment    ${dynamicDict}    Get Ms Excel Row Values Into Dictionary Based On Key    ${vendorAuthFilpePath}    TestCase_02    AuthorizationDynamicFieldDetail
+    Comment    ${value}    Return If Dictionary Contains Key    ${dynamicDict}    Check None in Source of Comparable Benefit Checkbox
+    Comment    ${checkBoxNotSelectedStatus}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //td[normalize-space()='AGADA, DORITHY']//preceding-sibling::td[2]//input
+    Comment    Log    Before Selecting the Status:'${checkBoxNotSelectedStatus}'
+    Comment    Comment    Run Keyword If    ${checkBoxNotSelectedStatus}    Click Element    //td[normalize-space()='AGADA, DORITHY']//preceding-sibling::td[2]//input
+    Comment    ${checkBoxSelectedStatus}    Run Keyword And Return Status    Checkbox Should Be Selected    //td[normalize-space()='AGADA, DORITHY']//preceding-sibling::td[2]//input
+    Comment    Log    After Selecting the Status:'${checkBoxSelectedStatus}'
+    Comment    Open Browser    ${Oklahoma_URL}    gc
+    Comment    ${timeout}    Set Variable    3
+    Comment    ${bStatus}    Set Variable    False
+    Comment    : FOR    ${itr}    IN RANGE    1    ${timeout}
+    Comment    \    ${text}    Run Keyword And Ignore Error    Selenium2Library.Get Alert Message    False
+    Comment    \    Comment    ${bStatus}    Run Keyword And Return Status    Should Not Contain    ${text}
+    ...    There were no alerts
+    Comment    \    ${bStatus}    Evaluate    '${text[0]}' == 'PASS'
+    Comment    \    Exit For Loop If    ${bStatus}
+    Comment    \    sleep    1s
+    Comment    Log    ${bStatus}
+    ${rowCount}    Set Variable    2
+    : FOR    ${itr}    IN RANGE    1    ${rowCount}+1
+    \    Log    ${itr}
+    [Teardown]    Stop Application

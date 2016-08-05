@@ -1,0 +1,2 @@
+*** Variables ***
+${checkBox_authorization_NewItem_None}    //input[contains(@id,'SourcesOfComparableBenefitCheckbox') and @value='None']

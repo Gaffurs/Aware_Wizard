@@ -1,0 +1,154 @@
+*** Settings ***
+Resource          super.txt
+
+*** Keywords ***
+LogInToTheApplication
+    [Arguments]    ${userName}    ${password}    ${URL}=${Oklahoma_URL}
+    [Documentation]    Login To Application:
+    ...
+    ...    Steps:
+    ...    1. Opening browser.
+    ...    2. Maximize the browser window.
+    ...    3. Entering User name.
+    ...    4. Entering Password.
+    ...    5. Clicking the Login button.
+    ...    6. If login fails then failed message will displays.
+    ${bStatus}    Set Variable    False
+    ${authDetailsDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    ${environment}    Get From Dictionary    ${authDetailsDictionary}    Environment
+    OpenBrowser    ${environment}
+    Maximize Browser Window
+    sleep    2s
+    ${LoginButtonStatsu}    Wait For Element Visible    ${LoginButton}    30s    Wating for Login Button to be Visible
+    Run Keyword If    ${LoginButtonStatsu} != True    Fail    Login Button is not visible
+    Input Text    ${login_UserNameTextBox}    ${userName}
+    Input Text    ${login_PasswordTextbox}    ${password}
+    Click Element    ${LoginButton}
+    ${bStatus}    Wait For Element Visible    ${LogOutButton}    20s    Waiting For Logout button to be visible in home page.
+    Run Keyword If    ${bStatus} != True    Fail    Failed To Login to the Application. Logout button is not visible in Home Page
+
+LogOutFromApplication
+    CloseOtherWindows    Main Menu - AWARE VR
+    SelectTheWindow    Main Menu - AWARE VR
+    ${bStatus}    Wait For Element Visible    ${LogOutButton}    20s    Logout button is not visible after Login
+    Run Keyword If    ${bStatus} != True    Fail    Logout Button is not Visible
+    ${bStatus}    Run Keyword And Return Status    Click Element Using Javascript    ${LogOutButton}
+    Run Keyword If    ${bStatus} != True    Click Element Using Javascript    ${LogOutButton}
+    ${logoutStatus}    Wait For Element Visible    //a[@id='LoginAgain_Anchor']    ${timeOut}    Waiting for Login Again button to visible
+    [Return]    ${logoutStatus}
+
+Stop Application
+    [Documentation]    Keyword do :
+    ...    1.Closes the browser
+    ...    2.Closes the 'IEDRIVERSERVER'
+    ...    3.Closes the 'chromedriver'.
+    Comment    closes the browser.
+    Run Keyword And Ignore Error    Capture Page Screenshot And Log    ${OUTPUTDIR}
+    Comment    Close Browser
+    Run Keyword If    '${Browser}'=='ie'    Process Close    IEDriverServer.exe
+    Run Keyword If    '${Browser}'=='gc'    Process Close    chromedriver.exe
+    Comment    Run Keyword If    '${BROWSER}'=='gc'    Process Close    chrome.exe
+
+SelectTheWindow
+    [Arguments]    ${WindowTitleToSelect}
+    : FOR    ${itr}    IN RANGE    0    10
+    \    Run Keyword And Ignore Error    Select Window By Title    ${WindowTitleToSelect}
+    \    ${newWindowTitle}    Get Title
+    \    Exit For Loop If    '${newWindowTitle}'=='${WindowTitleToSelect}'
+    \    sleep    1s
+    Run Keyword If    '${newWindowTitle}'!='${WindowTitleToSelect}'    FAIL    '${WindowTitleToSelect}' window is not avilable
+
+SelectMainModule
+    [Arguments]    ${mainMenuName}
+    ${mainMenuLocator}    Set Variable    //a[contains(@id,'rtlVRModuleTileList') and normalize-space()='${mainMenuName}']/h6
+    Click Element    ${mainMenuLocator}
+    SelectTheWindow    Case Search - Participant - Aware
+
+InputTextFromDictionary
+    [Arguments]    ${dictName}    ${keyName}    ${locator}
+    ${value}    Return If Dictionary Contains Key    ${dictName}    ${keyName}
+    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Input Text    ${locator}    ${value}
+    [Return]    ${value}
+
+Select The Dropdown value
+    [Arguments]    ${ArrowLocator}    ${option}    ${OptionLocator}=${EMPTY}
+    Click On Element    ${ArrowLocator}
+    Wait For Element Visible    ${OptionLocator}//ul/li[normalize-space()='${option}']    10s
+    Comment    ${xpathCount}    Get Matching Xpath Count    ${OptionLocator}
+    Click On Element    ${OptionLocator}//ul/li[normalize-space()='${option}']
+    [Return]    ${option}
+
+VerifyAlertPresentAndDismiss
+    ${bStatus}    Set Variable    False
+    : FOR    ${itr}    IN RANGE    1    5
+    \    sleep    1s
+    \    Run Keyword And Ignore Error    Capture Whole Screen And Log    ${OUTPUTDIR}
+    \    ${bStatus}    Run Keyword And Return Status    Alert Should Be Present
+    \    Exit For Loop If    ${bStatus} == True
+    \    sleep    1s
+    [Return]    ${bStatus}
+
+InputTextAndHandleAlertIfPresent
+    [Arguments]    ${FieldLocatorToClear}    ${FieldValue}
+    Clear Text    ${FieldLocatorToClear}
+    VerifyAlertPresentAndDismiss
+    ${bStatus}    Run Keyword And Return Status    Input Text    ${FieldLocatorToClear}    ${FieldValue}
+    Run Keyword If    ${bStatus} != True    Input Text    ${FieldLocatorToClear}    ${FieldValue}
+
+SelectDropdownFromDictionary
+    [Arguments]    ${dictName}    ${keyName}    ${locator}
+    ${value}    Return If Dictionary Contains Key    ${dictName}    ${keyName}
+    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Wait For Element Visible    ${locator}    10s
+    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Select The Dropdown value    ${locator}    ${value}
+
+WaitForAlertToPresentAndGetText
+    [Arguments]    ${loopEndRange}    ${alertText}
+    ${bStatus}    Set Variable    False
+    : FOR    ${itr}    IN RANGE    1    ${loopEndRange}
+    \    ${text}    Run Keyword And Ignore Error    Selenium2Library.Get Alert Message    False
+    \    ${bStatus}    Evaluate    '${text[0]}' == 'PASS'
+    \    Run Keyword If    ${bStatus}    Should Contain    ${text[1]}    ${alertText}
+    \    Exit For Loop If    ${bStatus}
+    \    sleep    1s
+    Run Keyword If    ${bStatus} != True    FAIL    No alert Present
+    ${textValue}    Set Variable    ${text[1]}
+    [Return]    ${textValue}
+
+GetMainAndSubDictionariesFromFile
+    [Arguments]    ${filePath}    ${mainSheetName}    ${subSheetName}    ${keyName}=Y
+    ${mainDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${filePath}    ${keyName}    ${mainSheetName}
+    ${testCaseRefValue}    Get From Dictionary    ${mainDictionary}    TestCaseName
+    ${subDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    ${testCaseRefValue}    ${subSheetName}
+    [Return]    ${mainDictionary}    ${subDictionary}
+
+GetURLBasedOnEnvironment
+    [Arguments]    ${environment}
+    ${URL}    Run Keyword If    '${environment}' == 'OK'    Set Variable    ${Oklahoma_URL}
+    ...    ELSE    Set Variable    ${California_URL}
+    [Return]    ${URL}
+
+OpenBrowser
+    [Arguments]    ${environment}
+    ${URL}    GetURLBasedOnEnvironment    ${environment}
+    ${chromeBrowserStatus}    Evaluate    '${Browser.lower()}'=='chrome' or '${Browser.lower()}'=='gc'
+    ${chrome_options}    Get Chrome Browser Options
+    ${kwargs}    Create Dictionary    chrome_options=${chrome_options}
+    Run Keyword If    ${chromeBrowserStatus}==True    Create Webdriver    Chrome    kwargs=${kwargs}
+    Run Keyword If    ${chromeBrowserStatus}==True    Go To    ${URL}
+    Run Keyword If    ${chromeBrowserStatus}==False    Selenium2Library.Open Browser    ${URL}    ${Browser}
+
+CloseOtherWindows
+    [Arguments]    ${windowName}
+    @{titles}    Get Window Titles
+    : FOR    ${title}    IN    @{titles}
+    \    Run Keyword If    '${title}' != '${windowName}'    Close Window
+
+Wait and Click Element
+    [Arguments]    ${elementlocator}    ${timeout}
+    [Documentation]    1) Application \ will wait for till the expected locator is found and click on the selected element.
+    ${kwStatus}    Set Variable    False
+    ${elementStatus}    Wait For Element Visible    ${elementlocator}    ${timeout}
+    Run Keyword If    ${elementStatus}==False    Fail    The expected locator ${elementlocator} was not visible within ${timeForElementVisibility} time out
+    Run Keyword If    ${elementStatus}    Mouse Over    ${elementlocator}
+    Run Keyword If    ${elementStatus}    Wait Until Keyword Succeeds    30s    3s    Click Element    ${elementlocator}
+    Run Keyword If    ${elementStatus}    Log    The expected locator ${elementlocator} was clicked successfuly.

@@ -1,0 +1,15 @@
+*** Settings ***
+Resource          common.txt
+Resource          ../Objects/buttons.txt
+Resource          ../Objects/checkboxes.txt
+Resource          ../Objects/dropdowns.txt
+Resource          ../Objects/links.txt
+Resource          ../Objects/textboxes.txt
+Library           Selenium2Library
+Resource          ../Objects/commonObjects.txt
+Library           ../Library/CommonLibrary.py
+Library           AutoItLibrary
+Library           Collections
+Resource          participantmodulekeywords.txt
+Library           String
+Library           Screenshot
