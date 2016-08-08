@@ -38,9 +38,22 @@ sample
     Comment    ${CaseLoadDict}    Create Dictionary    case    Service    Status    Active
     Comment    ${testCaseRef}    GetMainAndSubDictionariesFromFile    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
     Comment    Log Many    Test Case Reference-    ${testCaseRef}
-    ${envir}    Set Variable    CA
-    ${URL}    GetURLBasedOnEnvironment    ${envir}
-    Log Many    URL=    ${URL}
+    Comment    ${envir}    Set Variable    CA
+    Comment    ${URL}    GetURLBasedOnEnvironment    ${envir}
+    Comment    Log Many    URL=    ${URL}
+    Comment    Get Random Number In Given Range
+    Comment    ${authDetailsDictionary}    Create Dictionary    a=1    b=2
+    Comment    Set To Dictionary    ${authDetailsDictionary}    Case Status - Open=Service    Case Type=VR    Case Load Required=Yes    CaseLoad PrimaryToSelect=Counselor2, Test
+    Comment    Log Dictionary    ${authDetailsDictionary}
+    Comment    ${dictList}    Get Ms Excel Multiple Row Values Into Dictionary List Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    Comment    ${type}    Type Of Variable    ${dictList}
+    Comment    Log    ${type}
+    Comment    Run Keyword And Ignore Error    Log List    ${dictList}
+    Comment    Log Dictionary    ${dictList}
+    ${multipleDictionary}    Get Ms Excel Multiple Row Values Into Dictionary List Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    ${length}    Get Length    ${multipleDictionary}
+    : FOR    ${itr}    IN RANGE    1    ${length}+1
+    \    Log Many    Iteration Number    ${itr}
 
 sample2
     Comment    ${CaseLoadDict}    Create Dictionary    Case Status    \    Status    Active
@@ -80,7 +93,20 @@ sample2
     Comment    \    Exit For Loop If    ${bStatus}
     Comment    \    sleep    1s
     Comment    Log    ${bStatus}
-    ${rowCount}    Set Variable    2
-    : FOR    ${itr}    IN RANGE    1    ${rowCount}+1
-    \    Log    ${itr}
+    Comment    ${rowCount}    Set Variable    2
+    Comment    : FOR    ${itr}    IN RANGE    1    ${rowCount}+1
+    Comment    \    Log    ${itr}
+    ${multipleDictionary}    Get Ms Excel Multiple Row Values Into Dictionary List Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    ${length}    Get Length    ${multipleDictionary}
+    : FOR    ${itr}    IN RANGE    1    ${length}+1
+    \    Log Many    Iteration Number    ${itr}
+    \    Run Keyword And Continue On Failure    AuthorizationAndPayment
     [Teardown]    Stop Application
+
+sam
+    ${multipleDictionary}    Get Ms Excel Multiple Row Values Into Dictionary List Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
+    ${length}    Get Length    ${multipleDictionary}
+    : FOR    ${itr}    IN RANGE    1    ${length}+1
+    \    Log Many    Iteration Number    ${itr}
+    \    ${dictionaryDetails}    Get From Dictionary    ${multipleDictionary}    ${itr}
+    \    Log Dictionary    ${dictionaryDetails}

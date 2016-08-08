@@ -13,15 +13,14 @@ AuthorizationAndPayment
     ...    5. Filling Authorization General details.
     ...    6. Selecting Vendor details.
     ...    7. Adding New Item for the Selected Authorization
-    LogInToTheApplication    ${userName}    ${password}
-    DraftAuthorization
-    ${AuthrizationNumber}    IssueAuthorization
-    ${currentTotalValue}    AmendAuthorization    ${AuthrizationNumber}
-    Comment    Add_Payment    ${currentTotalValue}    ${AuthrizationNumber}
-    Comment    LogOutFromApplication
+    ${multipleAuthorizationDictionary}    Get Ms Excel Multiple Row Values Into Dictionary List Based On Key    ${authorizationFilePath}    Y    ${executionSheetName}
+    ${length}    Get Length    ${multipleAuthorizationDictionary}
+    : FOR    ${itr}    IN RANGE    1    ${length}+1
+    \    ${envDetailsDict}    Get From Dictionary    ${multipleAuthorizationDictionary}    ${itr}
+    \    Run Keyword And Continue On Failure    AuthorizationAndPayment    ${envDetailsDict}
     [Teardown]    Stop Application
 
-Participant_Draft_Authorization
+CAParticipantAuthorization
     [Documentation]    Draft a Participant Authorization
     ...
     ...    Steps:

@@ -1076,19 +1076,19 @@ class CommonLibrary:
             worksheet=workbook.sheet_by_name(sheetName)
             noofrows=worksheet.nrows
             listDict = {}
+            size = int(0);
             headersList=worksheet.row_values(int(0))
             for rowNo in range(1,int(noofrows)):
                 dictVar={}
                 rowValues=worksheet.row_values(int(rowNo))                
                 if str(rowValues[0])!=str(keyName):
-                    listDict[rowNo] = {}
                     continue
-				
+                size = size+1		
                 for rowIndex in range(0,len(rowValues)):
                     cell_data=rowValues[rowIndex]
                     cell_data=self.get_unique_test_data(cell_data)                
                     dictVar[str(headersList[rowIndex])]=str(cell_data)
-                listDict[rowNo] = dictVar
+                listDict[size] = dictVar
             return listDict
         def return_If_Dictionary_Contains_Key(self, dictionaryName, respectiveKey):
             """Returns value from dictionary if it contains the given key else returns null by handling the exception"""

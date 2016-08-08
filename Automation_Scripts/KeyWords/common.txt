@@ -3,7 +3,7 @@ Resource          super.txt
 
 *** Keywords ***
 LogInToTheApplication
-    [Arguments]    ${userName}    ${password}    ${URL}=${Oklahoma_URL}
+    [Arguments]    ${userName}    ${password}    ${envDetailsDict}
     [Documentation]    Login To Application:
     ...
     ...    Steps:
@@ -14,8 +14,7 @@ LogInToTheApplication
     ...    5. Clicking the Login button.
     ...    6. If login fails then failed message will displays.
     ${bStatus}    Set Variable    False
-    ${authDetailsDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    Y    ${authorizationDetailsSheetName}
-    ${environment}    Get From Dictionary    ${authDetailsDictionary}    Environment
+    ${environment}    Get From Dictionary    ${envDetailsDict}    Environment
     OpenBrowser    ${environment}
     Maximize Browser Window
     sleep    2s
@@ -26,6 +25,8 @@ LogInToTheApplication
     Click Element    ${LoginButton}
     ${bStatus}    Wait For Element Visible    ${LogOutButton}    20s    Waiting For Logout button to be visible in home page.
     Run Keyword If    ${bStatus} != True    Fail    Failed To Login to the Application. Logout button is not visible in Home Page
+    ${testCaseRefName}    Get From Dictionary    ${envDetailsDict}    TestCaseRefName
+    [Return]    ${testCaseRefName}
 
 LogOutFromApplication
     CloseOtherWindows    Main Menu - AWARE VR
@@ -43,7 +44,7 @@ Stop Application
     ...    2.Closes the 'IEDRIVERSERVER'
     ...    3.Closes the 'chromedriver'.
     Comment    closes the browser.
-    Run Keyword And Ignore Error    Capture Page Screenshot And Log    ${OUTPUTDIR}
+    Run Keyword And Ignore Error    Capture Whole Screen And Log    ${OUTPUTDIR}
     Comment    Close Browser
     Run Keyword If    '${Browser}'=='ie'    Process Close    IEDriverServer.exe
     Run Keyword If    '${Browser}'=='gc'    Process Close    chromedriver.exe
@@ -70,7 +71,7 @@ InputTextFromDictionary
     Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Input Text    ${locator}    ${value}
     [Return]    ${value}
 
-Select The Dropdown value
+SelectTheDropdownValue
     [Arguments]    ${ArrowLocator}    ${option}    ${OptionLocator}=${EMPTY}
     Click On Element    ${ArrowLocator}
     Wait For Element Visible    ${OptionLocator}//ul/li[normalize-space()='${option}']    10s
@@ -99,17 +100,18 @@ SelectDropdownFromDictionary
     [Arguments]    ${dictName}    ${keyName}    ${locator}
     ${value}    Return If Dictionary Contains Key    ${dictName}    ${keyName}
     Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Wait For Element Visible    ${locator}    10s
-    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    Select The Dropdown value    ${locator}    ${value}
+    Run Keyword If    '${value}'!='None' and '${value}'!= '${EMPTY}'    SelectTheDropdownValue    ${locator}    ${value}
 
 WaitForAlertToPresentAndGetText
     [Arguments]    ${loopEndRange}    ${alertText}
     ${bStatus}    Set Variable    False
     : FOR    ${itr}    IN RANGE    1    ${loopEndRange}
+    \    sleep    1s
+    \    Run Keyword And Ignore Error    Capture Whole Screen And Log    ${OUTPUTDIR}
     \    ${text}    Run Keyword And Ignore Error    Selenium2Library.Get Alert Message    False
     \    ${bStatus}    Evaluate    '${text[0]}' == 'PASS'
     \    Run Keyword If    ${bStatus}    Should Contain    ${text[1]}    ${alertText}
     \    Exit For Loop If    ${bStatus}
-    \    sleep    1s
     Run Keyword If    ${bStatus} != True    FAIL    No alert Present
     ${textValue}    Set Variable    ${text[1]}
     [Return]    ${textValue}
@@ -117,8 +119,7 @@ WaitForAlertToPresentAndGetText
 GetMainAndSubDictionariesFromFile
     [Arguments]    ${filePath}    ${mainSheetName}    ${subSheetName}    ${keyName}=Y
     ${mainDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${filePath}    ${keyName}    ${mainSheetName}
-    ${testCaseRefValue}    Get From Dictionary    ${mainDictionary}    TestCaseName
-    ${subDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    ${testCaseRefValue}    ${subSheetName}
+    ${subDictionary}    Get Ms Excel Row Values Into Dictionary Based On Key    ${authorizationFilePath}    ${keyName}    ${subSheetName}
     [Return]    ${mainDictionary}    ${subDictionary}
 
 GetURLBasedOnEnvironment
@@ -143,7 +144,7 @@ CloseOtherWindows
     : FOR    ${title}    IN    @{titles}
     \    Run Keyword If    '${title}' != '${windowName}'    Close Window
 
-Wait and Click Element
+WaitAndClickElement
     [Arguments]    ${elementlocator}    ${timeout}
     [Documentation]    1) Application \ will wait for till the expected locator is found and click on the selected element.
     ${kwStatus}    Set Variable    False
@@ -152,3 +153,9 @@ Wait and Click Element
     Run Keyword If    ${elementStatus}    Mouse Over    ${elementlocator}
     Run Keyword If    ${elementStatus}    Wait Until Keyword Succeeds    30s    3s    Click Element    ${elementlocator}
     Run Keyword If    ${elementStatus}    Log    The expected locator ${elementlocator} was clicked successfuly.
+
+GetTestCaseReferenceName
+    [Arguments]    ${multipleAuthorizationDictionary}    ${itr}
+    ${envDetailsDict}    Get From Dictionary    ${multipleAuthorizationDictionary}    ${itr}
+    ${testCaseRefName}    Get From Dictionary    ${envDetailsDict}    TestCaseRefName
+    [Return]    ${testCaseRefName}    ${envDetailsDict}
