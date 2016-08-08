@@ -1,6 +1,6 @@
 *** Variables ***
 ${Oklahoma_URL}    https://aedmz.com/okaware5
-${Browser}        gc
+${Browser}        ie
 ${userName}       counselor2
 ${password}       AE@!!iance6
 ${moduleNameToSelect}    Participant

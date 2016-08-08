@@ -537,7 +537,7 @@ AuthorizationAndPayment
     [Arguments]    ${envDetailsDict}
     ${testCaseRefName}    LogInToTheApplication    ${userName}    ${password}    ${envDetailsDict}
     DraftAuthorization    ${testCaseRefName}
-    ${AuthrizationNumber}    IssueAuthorization
-    ${currentTotalValue}    AmendAuthorization    ${AuthrizationNumber}    ${testCaseRefName}
-    AddPayment    ${currentTotalValue}    ${AuthrizationNumber}    ${testCaseRefName}
+    ${authrizationNumber}    IssueAuthorization
+    ${currentTotalValue}    AmendAuthorization    ${authrizationNumber}    ${testCaseRefName}
+    AddPayment    ${currentTotalValue}    ${authrizationNumber}    ${testCaseRefName}
     Comment    LogOutFromApplication
